@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  test-lambda-joshua
+
+  Simple test hello world lambda 
+
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello_world/
+      Handler: app.hello_world_handler
+      Runtime: python3.6
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+    
+  createThumbnailFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: image_resize/
+      Handler: app.create_thumbnail_handler
+      Runtime: python3.6
+      Policies:
+        - S3ReadPolicy:
+            BucketName: "test-image-bucket"
+        - S3WritePolicy:
+            BucketName: "test-image-bucket-resized"
+        - VPCAccessPolicy: {}
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-cc4107ab
+        SubnetIds:
+          - subnet-3de45257
+          - subnet-8539c9c9
+          - subnet-3a35d846
+      Events:
+        CreateThumbnail:
+          Type: S3
+          Properties:
+            Bucket: !Ref ImageBucket
+            Events: s3:ObjectCreated:*
+
+
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "test-image-bucket"
+  ImageResizeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "test-image-bucket-resized"
+
